@@ -368,6 +368,12 @@ class PlotBookingForm(forms.ModelForm):
         interest_rate = cleaned_data.get('interest_rate')
         emi_tenure = cleaned_data.get('emi_tenure')
         payment_type = cleaned_data.get('payment_type')
+
+                # Make booking_amount optional if payment_type is "custom"
+        if payment_type == 'custom' and not booking_amount:
+            self.fields['booking_amount'].required = False
+
+
         if payment_type == 'installment':
             emi_amount = calculate_emi(plot_price, booking_amount, emi_tenure, interest_rate)
             cleaned_data['emi_amount'] = emi_amount  # Save calculated EMI

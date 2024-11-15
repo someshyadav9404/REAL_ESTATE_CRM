@@ -183,7 +183,7 @@
         <!-- Booking Details -->
         <h4 class="section-subheading">Booking Details</h4>
         <div class="d-flex justify-content-between">
-            <p><strong>{{ form.location.label }}</strong>{{ form.location }}</p>
+            <p><strong>Property {{ form.location.label }}</strong>{{ form.location }}</p>
             <p><strong>Property</strong>{{ form.project }}</p>
             {% if form.project.errors %}
             <div class="error">{{ form.project.errors }}</div>
@@ -248,7 +248,7 @@
                 <!-- EMI Options -->
                 <div class="parent-div">
                     <div id="emi-options" style="display:none;">
-                        <p><strong>{{ form.booking_amount.label }}</strong>{{ form.booking_amount }}</p>
+                        <p class="form-group"><strong>{{ form.booking_amount.label }}</strong> {{ form.booking_amount }}</p>
                         <h4 class="section-subheading">EMI Details</h4>
                         <div class="form-group">
                             <label>EMI Tenure in Months</label>
@@ -296,6 +296,15 @@
 
     document.getElementById("id_payment_type").addEventListener("change", function () {
         const emiOptions = document.getElementById("emi-options");
+        if (this.value === "installment"){
+            emiOptions.style.display = "block";
+            id_booking_amount.required = true; // Set booking amount to required
+        } else {
+            emiOptions.style.display = "none";
+            // id_booking_amount.required = false; // Set booking amount to required
+            id_booking_amount.value = 0; // Set booking amount to required
+            id_booking_amount.disabled = true; // Disable the field to prevent user input
+        }
         console.log(document.getElementById("id_payment_type"))
         emiOptions.style.display = this.value === "installment" ? "block" : "none";
     });

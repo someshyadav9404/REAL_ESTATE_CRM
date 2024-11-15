@@ -816,6 +816,9 @@ class PropertyDetailView(generic.DetailView):
         # Fetch related PlotBooking for the specific property
         plot_booking = PlotBooking.objects.filter(project=property).first()
         salarys = Salary.objects.filter(property = property)
+        emipayments = EMIPayment.objects.filter(plot_booking = plot_booking ,status = 'Paid')
+        # totalemipaid = emipayments.plot_booking.all()
+        totalmoneypaidbycust = plot_booking.total_paidbycust + sum(emi.emi_amount for emi in emipayments)
         print(salarys)
         tot_sal = sum(salary.base_salary for salary in salarys)
 
@@ -851,6 +854,7 @@ class PropertyDetailView(generic.DetailView):
         print(total_plot_price)
 
         final_pr = property.totalprice - cost_for_land - tot_sal 
+        fprforbuyer = totalmoneypaidbycust - cost_for_land  - tot_sal 
 
 #Update context with all relevant details
         context.update({
@@ -860,6 +864,8 @@ class PropertyDetailView(generic.DetailView):
             'plot_booking': plot_booking,
             'total_land_cost': total_land_cost,
             'total_development_cost': total_development_cost,
+            'totalmoneypaidbycust': totalmoneypaidbycust,
+            'fprforbuyer': fprforbuyer,
             'agent': salarys,
             'tot_sal': tot_sal,
             'final_pr': final_pr,
@@ -1537,7 +1543,6 @@ class PlotRegistrationView(LoginRequiredMixin, View):
                 print(tenure,"tenure")
 
             else:
-                booking_amount = None
                 emi_amount = None
                 tenure = None
                 booking_amount = Property_inst.totalprice
