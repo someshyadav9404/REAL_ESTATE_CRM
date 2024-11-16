@@ -194,7 +194,7 @@ class DashboardView(LoginRequiredMixin, generic.TemplateView):
     def get_context_data(self, **kwargs):
         context = super(DashboardView, self).get_context_data(**kwargs)
         user = self.request.user
-        property = Property.objects.filter(is_sold = True,is_in_emi = True)
+        property = Property.objects.filter(is_sold = True)
         totalpropertysold = property.count()
         totalpropertysoldamount = sum(pro.totalprice for pro in property)
         plt = PlotBooking.objects.all()
@@ -589,7 +589,10 @@ class LeadCategoryUpdateView(LoginRequiredMixin, generic.UpdateView):
     def form_valid(self, form):
         lead_before_update = self.get_object()
         instance = form.save(commit=False)
-        converted_category = Category.objects.get(name="Converted")
+        converted_category = Category.objects.get(name="converted")
+        # converted_category = form.cleaned_data.get('category')
+        # = form.cleaned_data.get('category')
+
         if form.cleaned_data["category"] == converted_category:
             # update the date at which this lead was converted
             if lead_before_update.category != converted_category:
@@ -818,7 +821,6 @@ class PropertyDetailView(generic.DetailView):
         salarys = Salary.objects.filter(property = property)
         emipayments = EMIPayment.objects.filter(plot_booking = plot_booking ,status = 'Paid')
         # totalemipaid = emipayments.plot_booking.all()
-        totalmoneypaidbycust = plot_booking.total_paidbycust + sum(emi.emi_amount for emi in emipayments)
         print(salarys)
         tot_sal = sum(salary.base_salary for salary in salarys)
 
@@ -854,7 +856,9 @@ class PropertyDetailView(generic.DetailView):
         print(total_plot_price)
 
         final_pr = property.totalprice - cost_for_land - tot_sal 
-        fprforbuyer = totalmoneypaidbycust - cost_for_land  - tot_sal 
+        # if plot_booking:
+            # totalmoneypaidbycust = plot_booking.total_paidbycust + sum(emi.emi_amount for emi in emipayments)
+            # fprforbuyer = totalmoneypaidbycust - cost_for_land  - tot_sal 
 
 #Update context with all relevant details
         context.update({
@@ -864,8 +868,8 @@ class PropertyDetailView(generic.DetailView):
             'plot_booking': plot_booking,
             'total_land_cost': total_land_cost,
             'total_development_cost': total_development_cost,
-            'totalmoneypaidbycust': totalmoneypaidbycust,
-            'fprforbuyer': fprforbuyer,
+            # 'totalmoneypaidbycust': totalmoneypaidbycust,
+            # 'fprforbuyer': fprforbuyer,
             'agent': salarys,
             'tot_sal': tot_sal,
             'final_pr': final_pr,
@@ -1526,6 +1530,18 @@ class PlotRegistrationView(LoginRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         form = PlotBookingForm(request.POST)
         agents = Agent.objects.all()
+        properties = list(Property.objects.filter(is_in_emi=False, is_sold=False).values('id', 'totalprice', 'project_name'))
+
+        print("get")
+        properties = [
+        {
+            'id': prop['id'],
+            'price': str(prop['totalprice']),  # Convert Decimal to string
+            'project_name': prop['project_name']
+        }
+        for prop in properties
+]
+   
         print("post")
         
 
@@ -1694,7 +1710,7 @@ class PlotRegistrationView(LoginRequiredMixin, View):
             messages.error(request, 'A buyer with this project already exists!')
 
             #return redirect('plot_registration/buyers_list.html')
-            return render(request, self.template_name, {'form': form, 'agents': agents})
+            return render(request, self.template_name, {'form': form, 'agents': agents,'properties':properties})
 
 def load_properties(request):
     project_name = request.GET.get('property.title')
